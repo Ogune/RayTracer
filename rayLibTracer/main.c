@@ -1,183 +1,101 @@
+/* -- main.c -- */
+/* "What color should each pixel of the image be?" */
+
 #include "raylib/src/raylib.h"
+#include "raylib/src/raymath.h"
 #include <math.h>
 
-/* Let's start with our basic structures
+/* Global variables */
+const int screenWidth = 800;
+const int screenHeight = 600;
+
+/* Sphere struct */
 typedef struct {
-    Vector3 center;    // raylib provides Vector3!
-    float radius;
-    Color color;      // raylib provides Color too!
+	Vector3 center;
+	float radius;
+	Color color;
 } Sphere;
 
-typedef struct {
-    Vector3 position;
-    Vector3 normal;
-    Color color;
-} Plane;
+Ray GetRayFromPixel(Vector3 camera_pos, int x, int  y) {
+	float normalized_x = (2.0f * x / screenWidth) - 1.0f;
+	float normalized_y = 1.0f - (2.0f * y / screenHeight);
 
-typedef struct {
-    Vector3 position;
-    Vector3 direction;
-    float radius;
-    float height;
-    Color color;
-} Cylinder;
+	Ray ray;
+	ray.position = camera_pos;
+	ray.direction = (Vector3){normalized_x, normalized_y, 1.0f};
+	ray.direction = Vector3Normalize(ray.direction);
 
-int main(void) {
-    const int screenWidth = 800;
-    const int screenHeight = 600;
-    InitWindow(screenWidth, screenHeight, "RayLib RayTracer");
-
-    // Create a camera for 3D (raylib makes this easy!)
-    Camera3D camera = {0};
-    camera.position = (Vector3){0.0f, 10.0f, 10.0f};  // Camera position
-    camera.target = (Vector3){0.0f, 0.0f, 0.0f};      // Camera looking at
-    camera.up = (Vector3){0.0f, 1.0f, 0.0f};         // Camera up vector
-    camera.fovy = 45.0f;                              // Field of view
-    camera.projection = CAMERA_PERSPECTIVE;            // Perspective mode
-
-    // Example objects
-    Sphere sphere = {
-        .center = (Vector3){0, 0, 0},
-        .radius = 2.0f,
-        .color = RED
-    };
-
-    Plane plane = {
-        .position = (Vector3){0, -2, 0},
-        .normal = (Vector3){0, 1, 0},
-        .color = GREEN
-    };
-
-    SetTargetFPS(60);
-
-    while (!WindowShouldClose()) {
-        // Update camera controls (mouse/keyboard)
-        UpdateCamera(&camera, CAMERA_FREE);
-
-        BeginDrawing();
-            ClearBackground(RAYWHITE);
-            BeginMode3D(camera);
-                // Draw sphere
-                DrawSphere(sphere.center, sphere.radius, sphere.color);
-
-                // Draw plane as a large rectangle
-                DrawPlane((Vector3){0, -2, 0}, (Vector2){20, 20}, GREEN);
-
-            EndMode3D();
-
-            // Draw UI info
-            DrawFPS(10, 10);
-            DrawText("Move camera with mouse and WASD keys", 10, 30, 20, BLACK);
-        EndDrawing();
-    }
-
-    CloseWindow();
-    return 0;
-}*/
-
-typedef struct {
-    Vector3 origin;
-    Vector3 direction;
-} _Ray;
-
-typedef struct {
-    Vector3 center;
-    float radius;
-    Color color;
-} Sphere;
-
-// Helper function to create normalized vector
-Vector3 normalize_vector(Vector3 v) {
-    float len = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-    return (Vector3){v.x/len, v.y/len, v.z/len};
+	return ray;
 }
 
-// Ray-Sphere intersection (the math you're familiar with!)
-float intersect_sphere(_Ray ray, Sphere sphere) {
-    Vector3 oc = {
-        ray.origin.x - sphere.center.x,
-        ray.origin.y - sphere.center.y,
-        ray.origin.z - sphere.center.z
-    };
+bool RaySphereIntersect(Ray ray, Sphere sphere, float* distance) {
+	Vector3 oc = {
+		ray.position.x - sphere.center.x,
+		ray.position.y - sphere.center.y,
+		ray.position.z - sphere.center.z
+	};
+	/* Mathematically: a = D ⋅ D */
+	float a = Vector3DotProduct(ray.direction, ray.direction);
 
-    float a = ray.direction.x * ray.direction.x +
-              ray.direction.y * ray.direction.y +
-              ray.direction.z * ray.direction.z;
+	/* Mathematically: b = 2 ⋅(D ⋅oc) */
+	float b = 2.0f * Vector3DotProduct(oc, ray.direction);
+	
+	/* Mathematically: c = (oc ⋅oc) − r * r */
+	float c = Vector3DotProduct(oc, oc) - powf(sphere.radius, 2);
 
-    float b = 2.0f * (oc.x * ray.direction.x +
-                      oc.y * ray.direction.y +
-                      oc.z * ray.direction.z);
+	/* Mathematically: Δ = pow(b, 2) - 4ac */
+	float Δ = pow(b, 2) - 4 * a * c;
 
-    float c = oc.x * oc.x + oc.y * oc.y + oc.z * oc.z -
-              sphere.radius * sphere.radius;
+	/* if Δ < 0; there is no solution of this equation */
+	if (Δ < 0) return 0;
 
-    float discriminant = b*b - 4*a*c;
-
-    if (discriminant < 0) return -1.0f;
-
-    return (-b - sqrt(discriminant)) / (2.0f*a);
+	/* if (Δ >= 0); there is 1 to 2 solutions, but we don't really */
+	*distance = (-b - sqrt(Δ)) / (2.0f * a);
+	return *distance > 0;
 }
 
 int main(void) {
-    const int screenWidth = 800;
-    const int screenHeight = 600;
-    InitWindow(screenWidth, screenHeight, "Real Raytracer");
+	InitWindow(screenWidth, screenHeight, "Ray Tracer");
 
-    // Create an image we can draw pixels to
-    Image image = GenImageColor(screenWidth, screenHeight, BLACK);
-    Texture2D texture = LoadTextureFromImage(image);
+	RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
 
-    // Camera setup for ray generation
-    Vector3 camera_pos = {0, 0, -5};
-    float viewport_width = 2.0f;
-    float viewport_height = 1.5f;
-    float focal_length = 1.0f;
+	Sphere sphere = {
+		.center = (Vector3){0.0f, 0.0f, 0.0f},
+		.radius = 1.0f,
+		.color = RED
+	};
+	Vector3 camera_pos = {0.0f, 0.0f, -5.0f};
 
-    // Create a test sphere
-    Sphere sphere = {
-        .center = {0, 0, 0},
-        .radius = 1.0f,
-        .color = RED
-    };
+	SetTargetFPS(90);
 
-    // This is where the actual raytracing happens!
-    for (int y = 0; y < screenHeight; y++) {
-        for (int x = 0; x < screenWidth; x++) {
-            // Convert pixel coordinates to viewport coordinates
-            float viewport_x = (x / (float)screenWidth * viewport_width) - viewport_width/2;
-            float viewport_y = ((screenHeight-y) / (float)screenHeight * viewport_height) - viewport_height/2;
+	while (!WindowShouldClose()) {
+		if (IsKeyDown(KEY_W)) camera_pos.z += 0.1f;
+		if (IsKeyDown(KEY_S)) camera_pos.z -= 0.1f;
+		if (IsKeyDown(KEY_A)) camera_pos.x -= 0.1f;
+		if (IsKeyDown(KEY_D)) camera_pos.x += 0.1f;
 
-            // Create ray from camera through this pixel
-            _Ray ray = {
-                .origin = camera_pos,
-                .direction = normalize_vector((Vector3){
-                    viewport_x,
-                    viewport_y,
-                    focal_length
-                })
-            };
+		BeginTextureMode(target);
+		for (int y = 0; y < screenHeight; y++) {
+			for (int x = 0; x < screenWidth; x++) {
+				Ray ray = GetRayFromPixel(camera_pos, x, y);
+				float distance;
+				
+				if (RaySphereIntersect(ray, sphere, &distance))
+					DrawPixel(x, y, sphere.color);
+				else
+					DrawPixel(x, y, BLACK);
+			}
+		}
+		EndTextureMode();
 
-            // Check for intersection
-            float t = intersect_sphere(ray, sphere);
-
-            // If we hit something, color the pixel
-            if (t > 0) {
-                ImageDrawPixel(&image, x, y, sphere.color);
-            }
-        }
-    }
-
-    // Update texture with our raytraced image
-    UpdateTexture(texture, image.data);
-
-    while (!WindowShouldClose()) {
-        BeginDrawing();
-            DrawTexture(texture, 0, 0, WHITE);
-        EndDrawing();
-    }
-
-    UnloadTexture(texture);
-    UnloadImage(image);
-    CloseWindow();
-    return 0;
+		BeginDrawing();
+			ClearBackground(BLACK); DrawTextureRec(target.texture,
+							(Rectangle){0, 0, target.texture.width, -target.texture.height},
+							(Vector2){0, 0}, 
+							WHITE);
+			DrawFPS(10, 10);
+		EndDrawing();
+	}
+	UnloadRenderTexture(target);
+	CloseWindow();
 }
