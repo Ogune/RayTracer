@@ -65,6 +65,7 @@ int main(void) {
 		.color = RED
 	};
 	Vector3 camera_pos = {0.0f, 0.0f, -5.0f};
+	Vector3 light_pos = {5.0f, 5.0f, -5.0f}; // Position of the light source
 
 	SetTargetFPS(90);
 
@@ -79,9 +80,21 @@ int main(void) {
 			for (int x = 0; x < screenWidth; x++) {
 				Ray ray = GetRayFromPixel(camera_pos, x, y);
 				float distance;
-				
-				if (RaySphereIntersect(ray, sphere, &distance))
-					DrawPixel(x, y, sphere.color);
+				if (RaySphereIntersect(ray, sphere, &distance)) {
+                    Vector3 point = Vector3Add(ray.position, Vector3Scale(ray.direction, distance));
+                    Vector3 normal = Vector3Normalize(Vector3Subtract(point, sphere.center));
+                    Vector3 light_dir = Vector3Normalize(Vector3Subtract(light_pos, point));
+                    float intensity = fmax(Vector3DotProduct(normal, light_dir), 0.0f);
+                    //Color shaded_color = Fade(sphere.color, intensity); // Scale color by intensity
+					Color shaded_color = {
+        				.r = fmin(sphere.color.r * intensity, 255),
+        				.g = fmin(sphere.color.g * intensity, 255),
+      					.b = fmin(sphere.color.b * intensity, 255),
+        				.a = sphere.color.a
+   					 };
+ 
+					DrawPixel(x, y, shaded_color);
+				} 
 				else
 					DrawPixel(x, y, BLACK);
 			}
