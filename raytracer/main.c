@@ -17,6 +17,12 @@ typedef struct {
 	Color color;
 } Sphere;
 
+typedef struct {
+	Vector3 point;
+	Vector3 normal;
+	Color color;
+} Plane;
+
 Ray GetRayFromPixel(Vector3 camera_pos, int x, int  y) {
 	float normalized_x = (2.0f * x / screenWidth) - 1.0f;
 	float normalized_y = 1.0f - (2.0f * y / screenHeight);
@@ -58,6 +64,18 @@ bool RaySphereIntersect(Ray ray, Sphere sphere, float* distance) {
 	return *distance > 0;
 }
 
+bool RayPlaneIntersect(Ray ray, Plane plane, float* distance){
+	float denom = Vector3DotProduct(plane.normal, ray.direction);
+
+	if (denom <= 0.0001) return false;
+	
+	Vector3 p0_minus_o = Vector3Subtract(plane.point, ray.position);
+
+	/* Calculate t = (n⋅(P₀ - O)) / (n⋅D) */
+	*distance = Vector3DotProduct(plane.normal, p0_minus_o) / denom;
+	return *distance > 0;
+}
+
 int main(void) {
 	InitWindow(screenWidth, screenHeight, "Ray Tracer");
 
@@ -67,6 +85,11 @@ int main(void) {
 		.center = (Vector3){0.0f, 0.0f, 0.0f},
 		.radius = 1.0f,
 		.color = RED
+	};
+	Plane plane = {
+		.point = (Vector3){0.0f, 0.0f, 0.0f},
+		.normal = (Vector3){0, 1, 0},
+		.color = SKYBLUE
 	};
 	Vector3 camera_pos = {0.0f, 0.0f, -5.0f};
 	Vector3 light_pos = {5.0f, 5.0f, -5.0f}; // Position of the light source
@@ -84,7 +107,7 @@ int main(void) {
 			for (int x = 0; x < screenWidth; x++) {
 				Ray ray = GetRayFromPixel(camera_pos, x, y);
 				float distance;
-				if (RaySphereIntersect(ray, sphere, &distance)) {
+				/*if (RaySphereIntersect(ray, sphere, &distance)) {
                     Vector3 point = Vector3Add(ray.position, Vector3Scale(ray.direction, distance));
                     Vector3 normal = Vector3Normalize(Vector3Subtract(point, sphere.center));
                     Vector3 light_dir = Vector3Normalize(Vector3Subtract(light_pos, point));
@@ -96,11 +119,13 @@ int main(void) {
       					.b = fmin(sphere.color.b * intensity, 255),
         				.a = sphere.color.a
    					 };
- 
 					DrawPixel(x, y, shaded_color);
-				} 
-				else
-					DrawPixel(x, y, BLACK);
+				}*/
+				if (RayPlaneIntersect(ray, plane, &distance)) {
+					DrawPixel(x, y, plane.color);
+				}
+				/*else
+					DrawPixel(x, y, BLACK); */
 			}
 		}
 		EndTextureMode();
