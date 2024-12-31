@@ -9,7 +9,7 @@ const Raytracer = {
 ```
 <div align="center">
   <details>
-    <summary>📺 RayTracer v0.0.1 (Pre-Alpha) </summary>
+    <summary>📺 RayTracer v0.0.1 </summary>
     <img 
       src="https://raw.githubusercontent.com/48k483x/raytracer/main/raytracer/tests/video1.gif" 
       alt="Ray Tracer Demo"
