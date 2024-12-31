@@ -1,0 +1,10 @@
+A circle is just the edge, the set of points satisfying:
+
+(x−a)2+(y−b)2=r2
+
+.
+
+A disk is the edge and the interior; the set of points satisfying:
+
+(x−a)2+(y−b)2≤r2
+.
