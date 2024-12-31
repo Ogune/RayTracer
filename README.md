@@ -2,7 +2,7 @@
 
 ```javascript
 const Raytracer = {
-  "features": [solar system],
+  "features": ["solar system"],
   "objects": ["Sun", "Planets", "Orbits", "Stars"],
   "usage": "cd raytracer && make && ./ray",
   "dependencies": ["raylib", "Math Library"]
