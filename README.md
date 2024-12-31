@@ -1,9 +1,8 @@
 # Raytracer
 
 ```javascript
-const MiniRT = {
-  "description": "A minimalist ray tracer that visualizes the solar system 🌞",
-  "features": ["Ray tracing", "Planetary Orbits", "Lighting Effects", "Shadows"],
+const Raytracer = {
+  "features": [solar system],
   "objects": ["Sun", "Planets", "Orbits", "Stars"],
   "usage": "cd raytracer && make && ./ray",
   "dependencies": ["raylib", "Math Library"]
