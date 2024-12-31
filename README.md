@@ -1,5 +1,3 @@
-# Raytracer
-
 ```javascript
 const Raytracer = {
   "features": ["solar system"],
