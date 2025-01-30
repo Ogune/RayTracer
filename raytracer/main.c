@@ -36,7 +36,7 @@ Ray GetRayFromPixel(Vector3 camera_pos, int x, int  y) {
 	float normalized_x = (2.0f * x / screenWidth) - 1.0f;
 	float normalized_y = 1.0f - (2.0f * y / screenHeight);
 
-	/* Hadi: adjust aspect ratio */
+	/* Hadi: adjust aspect ratio */ 
 	normalized_x *= aspect_ratio;
 
 	Ray ray;
