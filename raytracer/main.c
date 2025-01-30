@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 /* Global variables */
-const int screenWidth = 600;
+const int screenWidth = 600; 
 const int screenHeight = 400;
 float aspect_ratio = (float)screenWidth / (float)screenHeight;
 
