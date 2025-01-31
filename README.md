@@ -5,7 +5,7 @@ const Raytracer = {
   "usage": "cd raytracer && make && ./ray",
   "dependencies": ["raylib", "Math Library"]
 }
-
+ 
 ```
 <div align="center">
   <details>
