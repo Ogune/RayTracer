@@ -1,4 +1,4 @@
-```javascript  
+```javascript   
 const Raytracer = {
   "features": ["solar system"],
   "objects": ["Sun", "Planets", "Orbits", "Stars"],
